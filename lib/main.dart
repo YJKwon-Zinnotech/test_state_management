@@ -1,94 +1,77 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'package:provider/provider.dart';
+final counterProvider = StateNotifierProvider<Counter, String>((ref) {
+  return Counter();
+});
 
+class Counter extends StateNotifier<String> {
+  Counter() : super('');
+
+  void increment() {
+
+    state='string1';
+  }
+  void decrement(){
+
+    state='string2';
+  }
+  void init(){
+
+    state='string3';
+  }
+}
 void main() {
-  runApp(ProviderTest());
+  runApp(
+    // For widgets to be able to read providers, we need to wrap the entire
+    // application in a "ProviderScope" widget.
+    // This is where the state of our providers will be stored.
+    ProviderScope(child: MyApp()),
+  );
 }
 
-class ProviderTest extends StatelessWidget {
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<Counter>( // Counter에 대한 Provider를 생성했다.
-      create: (_) => Counter(),
-      child: MaterialApp(
-        title: 'Provider Example',
-        home: Example(),
-      ), // Counter의 숫자를 보여주는 위젯이 들어갈 것이다.
+    return MaterialApp(home:MyHomePage());
+  }
+}
+
+
+class MyHomePage extends ConsumerWidget {
+  MyHomePage({Key? key}):super(key:key);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final counterRead = ref.read(counterProvider.notifier);
+    final counterState = ref.watch(counterProvider);
+
+    ref.listen(counterProvider, (previous, next) { print('$next change');});
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('test'),
+      ),
+      body: Center(
+        child: Text(
+          'Value: $counterState',
+        ),
+      ),
+      floatingActionButton: Align(
+        alignment: Alignment.bottomRight,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(onPressed: ()=>counterRead.increment()),
+            FloatingActionButton(onPressed: ()=>counterRead.decrement()),
+            FloatingActionButton(onPressed: ()=>counterRead.init()),
+          ],
+        ),
+      ),
     );
   }
 }
-class Example extends StatelessWidget {
-  Example(){
-    print('Example');
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Provider Example'),
-      ),
-      body: Row(
-        children:[ Row(
-          children: [
-            TestWidget('1st Row'),
-          ],
-          ),
-          Row(children:[
-          Container(color:Colors.red, child: TestWidget('2nd Row')),
-          TextWidget(),
-          Text('현재 숫자: ${context.read<Counter>().count}'),
-          ]),]
-        ),
 
-      );
-  }
-}
-class Counter extends ChangeNotifier { // ChangeNotifier를 extends한다.
-
-  Counter(){
-    secFor(10, 1);
-  }
-  int _count = 0;
-
-  int get count => _count;
-
-  void secFor(int num, int duration)async{
-    for(int i=0; i<num; i++) {
-      await Future.delayed(Duration(seconds: duration)).then((_) => increment());
-    }
-  }
-
-
-  void increment() {
-      _count++;
-      notifyListeners();
-  }
-}
-
-class TestWidget extends StatelessWidget {
-  TestWidget(String s, {Key? key}) : super(key: key){
-    print('$s Widget has created');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Placeholder();
-  }
-}
-
-class TextWidget extends StatelessWidget {
-  TextWidget(){
-    print('Text');
-  }
-  //const TextWidget({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text('현재 숫자: ${Provider.of<Counter>(context).count}');
-  }
-}
 
 
